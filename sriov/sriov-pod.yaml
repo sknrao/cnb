@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sriov-pod
+  annotations:
+    k8s.v1.cni.cncf.io/networks: sriov-net-a, sriov-net-b
+spec:
+  containers:
+  - name: sriov
+    image: dpdk-app-centos
+    imagePullPolicy: Never
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - mountPath: /etc/podnetinfo
+      name: podnetinfo
+      readOnly: false
+    - mountPath: /dev/hugepages
+      name: hugepage
+    resources:
+      requests:
+        memory: 16Gi
+        intel.com/intel_sriov_dpdk_a: '1'
+        intel.com/intel_sriov_dpdk_b: '1'
+      limits:
+        memory: 20Gi
+        hugepages-1Gi: 2Gi
+        intel.com/intel_sriov_dpdk_a: '1'
+        intel.com/intel_sriov_dpdk_b: '1'
+    command: ["sleep", "infinity"]
+#  nodeSelector:
+#    vswitch: ovs
+  volumes:
+  - name: podnetinfo
+    downwardAPI:
+      items:
+        - path: "labels"
+          fieldRef:
+            fieldPath: metadata.labels
+        - path: "annotations"
+          fieldRef:
+            fieldPath: metadata.annotations
+  - name: hugepage
+    emptyDir:
+      medium: HugePages

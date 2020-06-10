@@ -1,0 +1,1 @@
+sudo docker run -it --privileged --cap-add=ALL -v /dev/hugepages1G:/dev/hugepages1G -v /usr/local/var/run/openvswitch:/var/run/openvswitch -v /sys/bus/pci/devices:/sys/bus/pci/devices -v /sys/devices/system/node:/sys/devices/system/node -v /dev:/dev bionic-l2fwd /bin/bash
