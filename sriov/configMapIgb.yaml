@@ -11,7 +11,7 @@ data:
                 "selectors": {
                     "vendors": ["8086"],
                     "devices": ["10ed"],
-                    "drivers": ["vfio-pci"],
+                    "drivers": ["igb_uio"],
                     "pfNames": ["ens785f0"]
                 }
             },
@@ -20,7 +20,7 @@ data:
                 "selectors": {
                     "vendors": ["8086"],
                     "devices": ["10ed"],
-                    "drivers": ["vfio-pci"],
+                    "drivers": ["igb_uio"],
                     "pfNames": ["ens785f1"]
                 }
             }

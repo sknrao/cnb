@@ -14,17 +14,16 @@ metadata:
   labels:
     tier: node
     app: sriovdp
-    name: sriovdp
 spec:
   selector:
     matchLabels:
-      name: sriovdp
+      name: sriov-device-plugins
   template:
     metadata:
       labels:
         tier: node
         app: sriovdp
-        name: sriovdp
+        name: sriov-device-plugin
     spec:
       hostNetwork: true
       hostPID: true

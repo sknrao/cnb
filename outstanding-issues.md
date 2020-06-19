@@ -14,8 +14,11 @@ Is it possible to increase the number of queues? If so, should we do it on the o
 ## CPU Pinning for containers.
 Currently, when we run the pod, we do not have control on which core they should run. 
 
-## SRIOV 
-We have 4 scenarios, and all 4 have issues. We should focus on 2 and 4.
+## SRIOV
+With PF as ixgbe and VF as VFIO_PCI the setup works. But the issue is with the traffic.
+All packets are dropped by the PF (kernel driver).
+
+Other scenarios that did not work:
 
 ### Scenario-1: pf and vf using ixgbe and ixgbevf
 EAL: VFIO support initialized
@@ -26,6 +29,7 @@ EAL:   probe driver: 8086:10ed net_ixgbe_vf
 MAC updating disabled
 EAL: Error - exiting with code: 1
   Cause: No Ethernet ports - bye
+
 ### Scenario-2 pf using ixgbe and vf using igb_uio
 EAL: PCI device 0000:06:10.0 on NUMA socket 0
 EAL:   probe driver: 8086:10ed net_ixgbe_vf
@@ -43,5 +47,9 @@ EAL: Error - exiting with code: 1
 container fails to start, see this error in /var/log/messages..
 LoadConf(): failed to get VF information: "lstat /sys/bus/pci/devices/0000:06:10.0/physfn/net: no such file or directory"
 
-### Scenario-4: pf using ixgbe vf using VFIO_PCI
-vfio-pci: probe of 0000:06:00.0 failed with error -22
+## VPP
+VPP userspace CNI plugin does not support vhostuser interface.
+VPP userspace CNI plugin support memif, but the POD (dpdk-centos) cannot setup memif, it need vhostuser
+We have 2 options:
+1. Explore different CNI for VPP that support vhostuser.
+2. Consider different pod (container) that can handle memif and still run dpdk-l2fwd application.

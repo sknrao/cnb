@@ -9,8 +9,6 @@ spec:
   "type": "sriov",
   "cniVersion": "0.3.1",
   "name": "sriov-network-a",
-  "vlan": 100,
-  "vlanQoS": 1,
   "spoofchk": "off",
   "trust": "on"
 }'
