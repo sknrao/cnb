@@ -8,25 +8,24 @@ spec:
         "type": "userspace",
         "name": "userspace-vpp-net",
         "kubeconfig": "/etc/cni/net.d/multus.d/multus.kubeconfig",
-        "logFile": "/var/log/userspace-vpp-net-cni.log",
+        "logFile": "/var/log/userspace-vpp-net-1-cni.log",
         "logLevel": "debug",
         "host": {
                 "engine": "vpp",
-                "iftype": "vhostuser",
-                "netType": "bridge",
-                "vhost": {
-                        "mode": "server"
-                },
-                "bridge": {
-                        "bridgeName": "4"
+                "iftype": "memif",
+                "netType": "interface",
+                "memif": {
+                        "role": "master",
+                        "mode": "ethernet"
                 }
         },
         "container": {
                 "engine": "vpp",
-                "iftype": "vhostuser",
+                "iftype": "memif",
                 "netType": "interface",
-                "vhost": {
-                        "mode": "client"
+                "memif": {
+                        "role": "slave",
+                        "mode": "ethernet"
                 }
         }
     }'

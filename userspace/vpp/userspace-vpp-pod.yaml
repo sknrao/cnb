@@ -15,7 +15,7 @@ spec:
     - mountPath: /etc/podnetinfo
       name: podinfo
       readOnly: false
-    - mountPath: /var/run/vpp
+    - mountPath: /run
       name: shared-dir
     - mountPath: /dev/hugepages
       name: hugepage
@@ -43,8 +43,7 @@ spec:
             fieldPath: metadata.annotations
   - name: shared-dir
     hostPath:
-      path: /run/vpp/
+      path: /run
   - name: hugepage
     emptyDir:
       medium: HugePages
-
