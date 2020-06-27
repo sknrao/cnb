@@ -93,7 +93,7 @@ plugins {
 vpp v19.04.4-rc0~4-g8f2ac2b~b137 built by root on dbcd84b03fad at Wed Jan  1 17:31:21 UTC 2020
 ```
 
-## # L2 patch setup - commands used.
+## L2 patch setup - commands used.
 ```
 Direction:1
 sudo vppctl test l2patch rx TenGigabitEthernet6/0/0 tx memif1/0
@@ -105,7 +105,7 @@ sudo vppctl test l2patch rx memif1/0 tx TenGigabitEthernet6/0/0
 ```
 
 # Issue
-## Both All 4 L2 patches setup (PROBLEM)
+## All 4 L2 patches setup (PROBLEM)
 The Interfaces, Patches and Mode
 ```
 vpp# show interface
