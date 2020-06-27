@@ -15,7 +15,7 @@ spec:
     - mountPath: /etc/podnetinfo
       name: podinfo
       readOnly: false
-    - mountPath: /run
+    - mountPath: /run/
       name: shared-dir
     - mountPath: /dev/hugepages
       name: hugepage
