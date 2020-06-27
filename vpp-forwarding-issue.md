@@ -432,6 +432,274 @@ interface memif2/0
       region 0 offset 0 ring-size 1024 int-fd 49
       head 0 tail 0 flags 0x0001 interrupts 0
 ```
+## All 4 l2 patches (but swapped) - (PROBLEM) 
+In this case, phy to memif mapping is swapped.
+  The patches
+ ```
+ vpp# show l2patch
+   TenGigabitEthernet6/0/0 -> memif2/0
+   TenGigabitEthernet6/0/1 -> memif1/0
+                  memif1/0 -> TenGigabitEthernet6/0/1
+                  memif2/0 -> TenGigabitEthernet6/0/0
+vpp# show mode
+l3 local0
+l3 TenGigabitEthernet6/0/0
+l3 TenGigabitEthernet6/0/1
+l3 memif1/0
+l3 memif2/0
+ ```
+ Traffic Stats
+```
+vpp# show interface
+              Name               Idx    State  MTU (L3/IP4/IP6/MPLS)     Counter          Count
+TenGigabitEthernet6/0/0           1      up          9000/0/0/0     rx packets              47219911
+                                                                    rx bytes             53400883172
+TenGigabitEthernet6/0/1           2      up          9000/0/0/0     rx packets              47210680
+                                                                    rx bytes             53390787360
+                                                                    tx packets             346201132
+                                                                    tx bytes            393437750608
+                                                                    tx-error               255545720
+local0                            0     down          0/0/0/0
+memif1/0                          3      up          9000/0/0/0     rx packets             346201132
+                                                                    rx bytes            393437750608
+                                                                    tx packets              47210680
+                                                                    tx bytes             53390787360
+memif2/0                          4      up          9000/0/0/0     tx packets              47219911
+                                                                    tx bytes             53400883172
+
+```
+memif details
+```
+vpp# show memif
+sockets
+  id  listener    filename
+  2   yes (1)     /run/memif-c2d7dafc1cb4-net2.sock
+  0   no          /run/vpp/memif.sock
+  1   yes (1)     /run/memif-c2d7dafc1cb4-net1.sock
+
+interface memif1/0
+  remote-name "DPDK 19.08.0"
+  remote-interface "(null)"
+  socket-id 1 id 0 mode ethernet
+  flags admin-up connected
+  listener-fd 43 conn-fd 42
+  num-s2m-rings 1 num-m2s-rings 1 buffer-size 0 num-regions 1
+  region 0 size 4227328 fd 46
+    master-to-slave ring 0:
+      region 0 offset 16512 ring-size 1024 int-fd 50
+      head 25648 tail 24624 flags 0x0001 interrupts 0
+    slave-to-master ring 0:
+      region 0 offset 0 ring-size 1024 int-fd 48
+      head 39980 tail 39980 flags 0x0001 interrupts 0
+interface memif2/0
+  remote-name "DPDK 19.08.0"
+  remote-interface "(null)"
+  socket-id 2 id 0 mode ethernet
+  flags admin-up connected
+  listener-fd 44 conn-fd 45
+  num-s2m-rings 1 num-m2s-rings 1 buffer-size 0 num-regions 1
+  region 0 size 4227328 fd 47
+    master-to-slave ring 0:
+      region 0 offset 16512 ring-size 1024 int-fd 51
+      head 32115 tail 31091 flags 0x0001 interrupts 0
+    slave-to-master ring 0:
+      region 0 offset 0 ring-size 1024 int-fd 49
+      head 0 tail 0 flags 0x0001 interrupts 0
+
+```
+
+Inside Pod:
+```
+Port statistics ====================================
+Statistics for port 0 ------------------------------
+Packets sent:                 47207517
+Packets received:             47210544
+Packets dropped:                  9494
+Statistics for port 1 ------------------------------
+Packets sent:                 47200724
+Packets received:             47217011
+Packets dropped:                  9820
+Aggregate statistics ===============================
+Total packets sent:           94408241
+Total packets received:       94427555
+Total packets dropped:           19314
+====================================================
+```
+## Direction 1 (Swapped) - (NO PROBLEM)
+Interface, mode and patches
+```
+vpp# show interface
+              Name               Idx    State  MTU (L3/IP4/IP6/MPLS)     Counter          Count
+TenGigabitEthernet6/0/0           1      up          9000/0/0/0
+TenGigabitEthernet6/0/1           2      up          9000/0/0/0
+local0                            0     down          0/0/0/0
+memif1/0                          3      up          9000/0/0/0
+memif2/0                          4      up          9000/0/0/0
+vpp# show mode
+l3 local0
+l3 TenGigabitEthernet6/0/0
+l3 TenGigabitEthernet6/0/1
+l3 memif1/0
+l3 memif2/0
+vpp# show l2patch
+   TenGigabitEthernet6/0/0 -> memif2/0
+                  memif1/0 -> TenGigabitEthernet6/0/1
+```
+Traffic stats
+```
+vpp# show interface
+              Name               Idx    State  MTU (L3/IP4/IP6/MPLS)     Counter          Count
+TenGigabitEthernet6/0/0           1      up          9000/0/0/0     rx packets              24466686
+                                                                    rx bytes             24956019720
+TenGigabitEthernet6/0/1           2      up          9000/0/0/0     tx packets              24463253
+                                                                    tx bytes             24952518060
+local0                            0     down          0/0/0/0
+memif1/0                          3      up          9000/0/0/0     rx packets              24463253
+                                                                    rx bytes             24952518060
+memif2/0                          4      up          9000/0/0/0     tx packets              24466686
+                                                                    tx bytes             24956019720
+
+```
+memif:
+```
+interface memif1/0
+  remote-name "DPDK 19.08.0"
+  remote-interface "(null)"
+  socket-id 1 id 0 mode ethernet
+  flags admin-up connected
+  listener-fd 43 conn-fd 42
+  num-s2m-rings 1 num-m2s-rings 1 buffer-size 0 num-regions 1
+  region 0 size 4227328 fd 46
+    master-to-slave ring 0:
+      region 0 offset 16512 ring-size 1024 int-fd 50
+      head 1024 tail 0 flags 0x0001 interrupts 0
+    slave-to-master ring 0:
+      region 0 offset 0 ring-size 1024 int-fd 48
+      head 1594 tail 1594 flags 0x0001 interrupts 0
+interface memif2/0
+  remote-name "DPDK 19.08.0"
+  remote-interface "(null)"
+  socket-id 2 id 0 mode ethernet
+  flags admin-up connected
+  listener-fd 44 conn-fd 45
+  num-s2m-rings 1 num-m2s-rings 1 buffer-size 0 num-regions 1
+  region 0 size 4227328 fd 47
+    master-to-slave ring 0:
+      region 0 offset 16512 ring-size 1024 int-fd 51
+      head 2618 tail 1594 flags 0x0001 interrupts 0
+    slave-to-master ring 0:
+      region 0 offset 0 ring-size 1024 int-fd 49
+      head 0 tail 0 flags 0x0001 interrupts 0
+
+```
+
+Inside pods
+```
+Port statistics ====================================
+Statistics for port 0 ------------------------------
+Packets sent:                 24428493
+Packets received:                    0
+Packets dropped:                     0
+Statistics for port 1 ------------------------------
+Packets sent:                        0
+Packets received:             24428493
+Packets dropped:                     0
+Aggregate statistics ===============================
+Total packets sent:           24428493
+Total packets received:       24428493
+Total packets dropped:               0
+====================================================
+```
+
+## Direction-2 (Swapped) - (PROBLEM)
+Interfaces, mode and patch
+```
+vpp# show interface
+              Name               Idx    State  MTU (L3/IP4/IP6/MPLS)     Counter          Count
+TenGigabitEthernet6/0/0           1      up          9000/0/0/0
+TenGigabitEthernet6/0/1           2      up          9000/0/0/0
+local0                            0     down          0/0/0/0
+memif1/0                          3      up          9000/0/0/0
+memif2/0                          4      up          9000/0/0/0
+vpp# show mode
+l3 local0
+l3 TenGigabitEthernet6/0/0
+l3 TenGigabitEthernet6/0/1
+l3 memif1/0
+l3 memif2/0
+vpp# show l2patch
+   TenGigabitEthernet6/0/1 -> memif1/0
+                  memif2/0 -> TenGigabitEthernet6/0/0
+```
+Traffic Stats
+```
+vpp# show interface
+              Name               Idx    State  MTU (L3/IP4/IP6/MPLS)     Counter          Count
+TenGigabitEthernet6/0/0           1      up          9000/0/0/0
+TenGigabitEthernet6/0/1           2      up          9000/0/0/0     rx packets              22082525
+                                                                    rx bytes             25036676492
+local0                            0     down          0/0/0/0
+memif1/0                          3      up          9000/0/0/0     rx packets              22082525
+                                                                    rx bytes             25036676492
+                                                                    tx packets              22082525
+                                                                    tx bytes             25036676492
+                                                                    drops                   22082525
+                                                                    ip4                     22082525
+memif2/0                          4      up          9000/0/0/0
+
+```
+
+memif
+```
+interface memif1/0
+  remote-name "DPDK 19.08.0"
+  remote-interface "(null)"
+  socket-id 1 id 0 mode ethernet
+  flags admin-up connected
+  listener-fd 43 conn-fd 42
+  num-s2m-rings 1 num-m2s-rings 1 buffer-size 0 num-regions 1
+  region 0 size 4227328 fd 46
+    master-to-slave ring 0:
+      region 0 offset 16512 ring-size 1024 int-fd 50
+      head 63453 tail 62429 flags 0x0001 interrupts 0
+    slave-to-master ring 0:
+      region 0 offset 0 ring-size 1024 int-fd 48
+      head 62429 tail 62429 flags 0x0001 interrupts 0
+interface memif2/0
+  remote-name "DPDK 19.08.0"
+  remote-interface "(null)"
+  socket-id 2 id 0 mode ethernet
+  flags admin-up connected
+  listener-fd 44 conn-fd 45
+  num-s2m-rings 1 num-m2s-rings 1 buffer-size 0 num-regions 1
+  region 0 size 4227328 fd 47
+    master-to-slave ring 0:
+      region 0 offset 16512 ring-size 1024 int-fd 51
+      head 1024 tail 0 flags 0x0001 interrupts 0
+    slave-to-master ring 0:
+      region 0 offset 0 ring-size 1024 int-fd 49
+      head 0 tail 0 flags 0x0001 interrupts 0
+```
+
+Inside Pod
+```
+Port statistics ====================================
+Statistics for port 0 ------------------------------
+Packets sent:                        0
+Packets received:             22082525
+Packets dropped:                     0
+Statistics for port 1 ------------------------------
+Packets sent:                 22082525
+Packets received:                    0
+Packets dropped:                     0
+Aggregate statistics ===============================
+Total packets sent:           22082525
+Total packets received:       22082525
+Total packets dropped:               0
+====================================================
+
+```
+
 
 # Other Failed Configurations:
 ## xconnect instead of l2patch.
