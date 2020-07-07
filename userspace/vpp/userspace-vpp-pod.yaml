@@ -3,7 +3,7 @@ kind: Pod
 metadata:
   name: userspace-vpp-pod
   annotations:
-    k8s.v1.cni.cncf.io/networks: userspace-vpp-net, userspace-vpp-net
+    k8s.v1.cni.cncf.io/networks: userspace-vpp-net-b, userspace-vpp-net-a
 spec:
   containers:
   - name: vpp-vhost

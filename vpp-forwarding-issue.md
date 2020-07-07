@@ -766,3 +766,246 @@ memif1/0                          3      up          9000/0/0/0     rx packets  
 memif2/0                          4      up          9000/0/0/0     tx packets              88391124
                                                                     tx bytes            100208948912
  ```
+
+## Master and slave on VPP, and Slave and Master in Containers Vs Master and Master on VPP and Slave and Slave in Containers.
+
+output:
+```
+vpp# show memif
+sockets
+  id  listener    filename
+  2   no          /run/memif-3f78f465c811-net2.sock
+  0   no          /run/vpp/memif.sock
+  1   yes (1)     /run/memif-3f78f465c811-net1.sock
+
+interface memif1/0
+  remote-name "DPDK 19.08.0"
+  remote-interface "(null)"
+  socket-id 1 id 0 mode ethernet
+  flags admin-up connected
+  listener-fd 43 conn-fd 42
+  num-s2m-rings 1 num-m2s-rings 1 buffer-size 0 num-regions 1
+  region 0 size 4227328 fd 44
+    master-to-slave ring 0:
+      region 0 offset 16512 ring-size 1024 int-fd 46
+      head 33494 tail 55953 flags 0x0001 interrupts 0
+    slave-to-master ring 0:
+      region 0 offset 0 ring-size 1024 int-fd 45
+      head 31988 tail 31988 flags 0x0001 interrupts 0
+interface memif2/0
+  remote-name "DPDK 19.08.0"
+  remote-interface "(null)"
+  socket-id 2 id 0 mode ethernet
+  flags admin-up slave connected
+  listener-fd 0 conn-fd 47
+  num-s2m-rings 1 num-m2s-rings 1 buffer-size 2048 num-regions 1
+  region 0 size 4227328 fd 48
+    slave-to-master ring 0:
+      region 0 offset 0 ring-size 1024 int-fd 49
+      head 31988 tail 31988 flags 0x0001 interrupts 0
+    master-to-slave ring 0:
+      region 0 offset 16512 ring-size 1024 int-fd 50
+      head 1024 tail 0 flags 0x0001 interrupts 0
+
+
+vpp# show interface
+              Name               Idx    State  MTU (L3/IP4/IP6/MPLS)     Counter          Count
+TenGigabitEthernet6/0/0           1      up          9000/0/0/0     rx packets              31430209
+                                                                    rx bytes             40104937468
+                                                                    tx packets              57113844
+                                                                    tx bytes             72877255728
+TenGigabitEthernet6/0/1           2      up          9000/0/0/0     rx packets              57119880
+                                                                    rx bytes             72884957664
+local0                            0     down          0/0/0/0
+memif1/0                          3      up          9000/0/0/0     rx packets              57113844
+                                                                    rx bytes             72877255728
+                                                                    tx packets              31430209
+                                                                    tx bytes             40104937468
+memif2/0                          4      up          9000/0/0/0     tx packets              57119880
+                                                                    tx bytes             72884957664
+
+
+Port statistics ====================================
+Statistics for port 0 ------------------------------
+Packets sent:                 57113844
+Packets received:            603480719
+Packets dropped:                     0
+Statistics for port 1 ------------------------------
+Packets sent:                603475469
+Packets received:             57113844
+Packets dropped:                  5250
+Aggregate statistics ===============================
+Total packets sent:          660589313
+Total packets received:      660594563
+Total packets dropped:            5250
+====================================================
+
+
+ENTER dpdk-app:
+ argc=1
+ l2fwd
+  cpuRsp.CPUSet = 0-43
+  Interface[0]:
+    IfName="eth0"  Name="cbr0"  Type=unknown
+    MAC="6a:4e:3e:c6:8d:ae"  IP="10.244.1.10"
+  Interface[1]:
+    IfName="net1"  Name="userspace-vpp-net"  Type=memif
+    MAC=""
+    Role=slave  Mode=ethernet  Socketpath="/run/memif-3f78f465c811-net1.sock"
+  Interface[2]:
+    IfName="net2"  Name="userspace-vpp-net"  Type=memif
+    MAC=""
+    Role=master  Mode=ethernet  Socketpath="/run/memif-3f78f465c811-net2.sock"
+ myArgc=16
+ dpdk-app -n 4 -l 7-10 --master-lcore 7 --vdev=net_memif1,socket=/run/memif-3f78f465c811-net1.sock,role=slave --vdev=net_memif2,socket=/run/memif-3f78f465c811-net2.sock,role=master --no-pci -- -p 0x3 -T 120 --no-mac-updating
+EAL: Detected 44 lcore(s)
+EAL: Detected 2 NUMA nodes
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'VA'
+EAL: No available hugepages reported in hugepages-2048kB
+EAL: Probing VFIO support...
+EAL: VFIO support initialized
+MAC updating disabled
+Lcore 7: RX port 0
+Lcore 8: RX port 1
+Initializing port 0... done:
+Port 0, MAC address: B2:44:29:45:74:BB
+
+Initializing port 1... done:
+Port 1, MAC address: 8A:DC:A2:0A:A5:19
+
+
+Checking link status........................done
+Port0 Link Up. Speed 0 Mbps - half-duplex
+
+Port1 Link Up. Speed 0 Mbps - half-duplex
+
+L2FWD: entering main loop on lcore 8
+L2FWD:  -- lcoreid=8 portid=1
+L2FWD: entering main loop on lcore 7
+L2FWD:  -- lcoreid=7 portid=0
+
+
+vpp# show l2patch
+   TenGigabitEthernet6/0/0 -> memif1/0
+   TenGigabitEthernet6/0/1 -> memif2/0
+                  memif1/0 -> TenGigabitEthernet6/0/0
+                  memif2/0 -> TenGigabitEthernet6/0/1
+```
+
+## run testpmd instead of l2fwd
+Output
+
+```
+vpp# show l2patch
+   TenGigabitEthernet6/0/0 -> memif1/0
+   TenGigabitEthernet6/0/1 -> memif2/0
+                  memif1/0 -> TenGigabitEthernet6/0/0
+                  memif2/0 -> TenGigabitEthernet6/0/1
+
+
+Port statistics ====================================
+  ######################## NIC statistics for port 0  ########################
+  RX-packets: 59051466   RX-missed: 0          RX-bytes:  75349652184
+  RX-errors: 0
+  RX-nombuf:  0
+  TX-packets: 108245955  TX-errors: 0          TX-bytes:  138121820148
+
+  Throughput (since last show)
+  Rx-pps:       239470
+  Tx-pps:       434003
+  ############################################################################
+
+  ######################## NIC statistics for port 1  ########################
+  RX-packets: 108245955  RX-missed: 0          RX-bytes:  138121820148
+  RX-errors: 0
+  RX-nombuf:  0
+  TX-packets: 59051466   TX-errors: 0          TX-bytes:  75349652184
+
+  Throughput (since last show)
+  Rx-pps:       434003
+  Tx-pps:       239470
+  ############################################################################
+
+
+vpp# show interface
+              Name               Idx    State  MTU (L3/IP4/IP6/MPLS)     Counter          Count
+TenGigabitEthernet6/0/0           1      up          9000/0/0/0     rx packets              59051778
+                                                                    rx bytes             75350050296
+                                                                    tx packets             167297421
+                                                                    tx bytes            213471472332
+                                                                    tx-error                58040139
+TenGigabitEthernet6/0/1           2      up          9000/0/0/0     rx packets             108246261
+                                                                    rx bytes            138122210604
+local0                            0     down          0/0/0/0
+memif1/0                          3      up          9000/0/0/0     rx packets             167297421
+                                                                    rx bytes            213471472332
+                                                                    tx packets              59051778
+                                                                    tx bytes             75350050296
+memif2/0                          4      up          9000/0/0/0     tx packets             108246261
+                                                                    tx bytes            138122210604
+
+
+
+
+vpp# show memif
+sockets
+  id  listener    filename
+  2   yes (1)     /run/memif-e2807915fca4-net2.sock
+  0   no          /run/vpp/memif.sock
+  1   yes (1)     /run/memif-e2807915fca4-net1.sock
+
+interface memif1/0
+  remote-name "DPDK 19.08.0"
+  remote-interface "(null)"
+  socket-id 1 id 0 mode ethernet
+  flags admin-up connected
+  listener-fd 42 conn-fd 41
+  num-s2m-rings 3 num-m2s-rings 3 buffer-size 0 num-regions 1
+  region 0 size 12681984 fd 46
+    master-to-slave ring 0:
+      region 0 offset 49536 ring-size 1024 int-fd 54
+      head 1024 tail 0 flags 0x0001 interrupts 0
+    master-to-slave ring 1:
+      region 0 offset 66048 ring-size 1024 int-fd 56
+      head 4554 tail 3530 flags 0x0001 interrupts 0
+    master-to-slave ring 2:
+      region 0 offset 82560 ring-size 1024 int-fd 58
+      head 1024 tail 0 flags 0x0001 interrupts 0
+    slave-to-master ring 0:
+      region 0 offset 0 ring-size 1024 int-fd 48
+      head 0 tail 0 flags 0x0001 interrupts 0
+    slave-to-master ring 1:
+      region 0 offset 16512 ring-size 1024 int-fd 50
+      head 49549 tail 49549 flags 0x0001 interrupts 0
+    slave-to-master ring 2:
+      region 0 offset 33024 ring-size 1024 int-fd 52
+      head 0 tail 0 flags 0x0001 interrupts 0
+interface memif2/0
+  remote-name "DPDK 19.08.0"
+  remote-interface "(null)"
+  socket-id 2 id 0 mode ethernet
+  flags admin-up connected
+  listener-fd 43 conn-fd 45
+  num-s2m-rings 3 num-m2s-rings 3 buffer-size 0 num-regions 1
+  region 0 size 12681984 fd 47
+    master-to-slave ring 0:
+      region 0 offset 49536 ring-size 1024 int-fd 55
+      head 1024 tail 0 flags 0x0001 interrupts 0
+    master-to-slave ring 1:
+      region 0 offset 66048 ring-size 1024 int-fd 57
+      head 47043 tail 46019 flags 0x0001 interrupts 0
+    master-to-slave ring 2:
+      region 0 offset 82560 ring-size 1024 int-fd 59
+      head 1024 tail 0 flags 0x0001 interrupts 0
+    slave-to-master ring 0:
+      region 0 offset 0 ring-size 1024 int-fd 49
+      head 0 tail 0 flags 0x0001 interrupts 0
+    slave-to-master ring 1:
+      region 0 offset 16512 ring-size 1024 int-fd 51
+      head 0 tail 0 flags 0x0001 interrupts 0
+    slave-to-master ring 2:
+      region 0 offset 33024 ring-size 1024 int-fd 53
+      head 0 tail 0 flags 0x0001 interrupts 0
+
+```

@@ -13,13 +13,10 @@ spec:
         "host": {
                 "engine": "vpp",
                 "iftype": "memif",
-                "netType": "bridge",
+                "netType": "interface",
                 "memif": {
                         "role": "master",
                         "mode": "ethernet"
-                },
-                "bridge": {
-                         "bridgeName": "4"
                 }
         },
         "container": {
