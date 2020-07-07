@@ -1,5 +1,7 @@
 # Userspace CNI VPP Forwarding Issue
 
+## Summary of the Problem:
+If we use vpp, userspace-cni, memif interfaces, and dpdk-app-centos pod - and run l2fwd or any loopback app inside the pod, the packets between two memif interfaces will flow in only one direction - memif2/0 to memif1/0 - and never from memif1/0 to memif2/0. That is, there will be no rx on memif2/0. Tried different, modes of master-slave permutations, different loopback applications, nothing worked.
 
 ## Test Setup:
 ```
