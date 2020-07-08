@@ -12,7 +12,7 @@ spec:
     securityContext:
       privileged: true
     volumeMounts:
-    - mountPath: /etc/podinfo
+    - mountPath: /etc/podnetinfo
       name: podinfo
       readOnly: false
     - mountPath: /var/lib/cni/usrspcni/
