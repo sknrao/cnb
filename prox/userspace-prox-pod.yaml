@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: userspace-spirent-pod
+  name: userspace-prox-pod
   annotations:
     k8s.v1.cni.cncf.io/networks: userspace-vpp-net, userspace-vpp-net
 spec:
