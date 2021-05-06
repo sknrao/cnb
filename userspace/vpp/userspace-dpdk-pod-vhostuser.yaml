@@ -1,18 +1,18 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: userspace-vpp-pod
+  name: userspace-vhost-vpp-pod
   annotations:
-    k8s.v1.cni.cncf.io/networks: userspace-vpp-net, userspace-vpp-net
+    k8s.v1.cni.cncf.io/networks: userspace-vhost-vpp-net, userspace-vhost-vpp-net
 spec:
   containers:
   - name: vpp-vhost
-    image: dpdk-app-centos:latest
+    image: newdpdk-app-centos:latest
     imagePullPolicy: Never
     securityContext:
       privileged: true
     volumeMounts:
-    - mountPath: /etc/podinfo
+    - mountPath: /etc/podnetinfo
       name: podinfo
       readOnly: false
     - mountPath: /var/lib/cni/usrspcni/
@@ -21,12 +21,12 @@ spec:
       name: hugepage
     resources:
       requests:
-        cpu: "2000m"
-        memory: 16Gi
+        cpu: "6000m"
+        memory: "4000Mi"
         hugepages-1Gi: 4Gi
       limits:
-        cpu: "2000m"
-        memory: 20Gi
+        cpu: "6000m"
+        memory: "4000Mi"
         hugepages-1Gi: 4Gi
     command: ["sleep", "infinity"]
   nodeSelector:

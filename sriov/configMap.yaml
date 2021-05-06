@@ -12,7 +12,7 @@ data:
                     "vendors": ["8086"],
                     "devices": ["10ed"],
                     "drivers": ["vfio-pci"],
-                    "pfNames": ["ens785f0"]
+                    "pfNames": ["eno3"]
                 }
             },
             {
@@ -21,7 +21,7 @@ data:
                     "vendors": ["8086"],
                     "devices": ["10ed"],
                     "drivers": ["vfio-pci"],
-                    "pfNames": ["ens785f1"]
+                    "pfNames": ["eno4"]
                 }
             }
 

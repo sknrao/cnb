@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: multi-vhost
-    image: dpdk-app-centos
+    image: dpdk-app-centos:latest
     imagePullPolicy: Never
     securityContext:
       privileged: true
@@ -21,12 +21,10 @@ spec:
       name: hugepage
     resources:
       requests:
-        cpu: "2000m"
-        memory: 16Gi
+        cpu: "4000m"
         hugepages-1Gi: 4Gi
       limits:
-        cpu: "2000m"
-        memory: 20Gi
+        cpu: "4000m"
         hugepages-1Gi: 4Gi
     command: ["sleep", "infinity"]
   nodeSelector:
