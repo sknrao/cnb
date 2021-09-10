@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: stc-service
+spec:
+  type: NodePort
+  ports:
+  - targetPort: 40004
+    port: 40004
+    nodePort: 40004
+  selector:
+    app: stcc

@@ -1,2 +1,2 @@
-kubectl delete pod  --force userspace-rapid-pod
+kubectl delete pod  --force userspace-pktgen-pod
 kubectl delete -f userspace-vpp-netAttach-memif.yaml

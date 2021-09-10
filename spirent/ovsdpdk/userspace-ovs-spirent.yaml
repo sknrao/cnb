@@ -2,29 +2,69 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: userspace-ovs-spirent
+  labels:
+    app: stcc
   annotations:
     k8s.v1.cni.cncf.io/networks: userspace-ovs-net, userspace-ovs-net
 spec:
+  priority: 0
   containers:
   - name: multi-vhost
     image: stc:5.17.0016
     imagePullPolicy: Never
+    readinessProbe:
+        exec:
+          command:
+            - /bin/bash
+            - '-c'
+            - >-
+              if [[ ! -e /tmp/containerIsReady ]]; then exec 5<>
+              /dev/udp/localhost/40004; echo -ne "AreYouSpirent" >&5; dd bs=10
+              count=1 <&5 && touch /tmp/containerIsReady; fi
+        initialDelaySeconds: 30
+        timeoutSeconds: 5
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 54
+    terminationMessagePath: /dev/termination-log
+    command:
+        - /sbin/init
     securityContext:
-      privileged: true
-    env:
-      - name: KUBERNETES_POD_UID
-        valueFrom:
-          fieldRef:
-            fieldPath: metadata.uid
+      privileged: false
+      capabilities:
+          add:
+            - SYS_ADMIN
+            - SYS_NICE
+            - SYSLOG
+            - SYS_PTRACE
+            - SYS_RAWIO
+    ports:
+        - name: chassis-port-t
+          containerPort: 40004
+          protocol: TCP
+        - name: chassis-port-u
+          containerPort: 40004
+          protocol: UDP
+        - name: group-port
+          containerPort: 51204
+          protocol: TCP
+        - name: upgrade-port
+          containerPort: 1666
+          protocol: TCP
+        - name: rest-port
+          containerPort: 9090
+          protocol: TCP
     volumeMounts:
     - mountPath: /etc/podnetinfo
       name: podinfo
       readOnly: false
     - mountPath: /dpdk
       name: shared-dir
-      subPathExpr: $(KUBERNETES_POD_UID)
     - mountPath: /hugepages
       name: hugepage
+    env:
+      - name: SPIRENT_ADMIN
+        value: "--mode container --speed 10G --admin-interface eth0"
     resources:
       requests:
         cpu: "4000m"
